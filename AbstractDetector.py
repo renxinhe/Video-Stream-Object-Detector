@@ -22,6 +22,12 @@ class AbstractDetector(object):
     def drawBoundingBox(self, frame):
         return frame
 
+    def checkCapture(self):
+        if not hasattr(self, 'cap') or self.cap is None or not self.cap.isOpened():
+            opened = self.openCaputure()
+            if not opened:
+                raise ValueError('Stream cannot be opened.')
+
     """
         Open a cv2 capture object.
 
@@ -40,19 +46,13 @@ class AbstractDetector(object):
         self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         return self.cap.isOpened()
 
-    def checkCapture(self):
-        if not hasattr(self, 'cap') or self.cap is None or not self.cap.isOpened():
-            opened = self.openCaputure()
-            if not opened:
-                raise ValueError('Stream cannot be opened.')
-
     def displayAnnotatedFrames(self):
         self.checkCapture()
 
         fps = int(self.cap.get(cv2.CAP_PROP_FPS))
         if fps >= AbstractDetector.FPS_CAP:
             fps = AbstractDetector.FPS_CAP
-        print 'Displaying with FPS = %d.' % fps
+        print 'Displaying with FPS = %d' % fps
         try:
             print 'Press Q to stop video stream.'
             while(self.cap.isOpened()):
@@ -76,13 +76,13 @@ class AbstractDetector(object):
         self.checkCapture()
 
         fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-        if fps >= FPS_CAP:
-            fps = FPS_CAP
+        if fps >= AbstractDetector.FPS_CAP:
+            fps = AbstractDetector.FPS_CAP
         assert fps > 0, "FPS can't be negative."
 
         # Define the codec and create VideoWriter object
-        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        out = cv2.VideoWriter('%s_%s.avi' % (self.architechture, filename), fourcc, fps, (self.width, self.height))
+        fourcc = cv2.VideoWriter_fourcc(*'X264')
+        out = cv2.VideoWriter('%s_%s.mp4' % (filename, self.architechture), fourcc, fps, (self.width, self.height))
         
         try:
             while(self.cap.isOpened()):
