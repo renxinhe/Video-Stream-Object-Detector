@@ -2,6 +2,8 @@ import os
 import cv2
 import numpy as np
 
+from time import time, localtime, mktime, strftime
+
 class AbstractDetector(object):
     FPS_CAP = 60
 
@@ -72,7 +74,7 @@ class AbstractDetector(object):
             self.cap.release()
             cv2.destroyAllWindows()
 
-    def saveAnnotatedFrames(self, filename):
+    def saveAnnotatedFrames(self, filename, root_path='/nfs/diskstation/jren/alberta_cam/', segment_length=None, dir_size_limit=None):
         self.checkCapture()
 
         fps = int(self.cap.get(cv2.CAP_PROP_FPS))
@@ -82,10 +84,21 @@ class AbstractDetector(object):
 
         # Define the codec and create VideoWriter object
         fourcc = cv2.VideoWriter_fourcc(*'X264')
-        out = cv2.VideoWriter('%s_%s.mp4' % (filename, self.architechture), fourcc, fps, (self.width, self.height))
+
+        filepath = os.path.join(root_path, filename)
+        timestamp = localtime()
+        timestr = strftime('%Y-%m-%d_%H-%M-%S', timestamp)
+        out = cv2.VideoWriter('%s_%s_%s.mp4' % (filepath, self.architechture, timestr), fourcc, fps, (self.width, self.height))
         
+        dir_size_maxed = False
         try:
             while(self.cap.isOpened()):
+                if segment_length is not None:
+                    if time() - mktime(timestamp) > segment_length:
+                        timestamp = localtime()
+                        timestr = strftime('%Y-%m-%d_%H-%M-%S', timestamp)
+                        out.open('%s_%s_%s.mp4' % (filepath, self.architechture, timestr), fourcc, fps, (self.width, self.height))
+
                 ret, frame = self.cap.read()
                 if frame is None:
                     break
@@ -94,8 +107,16 @@ class AbstractDetector(object):
                 self.drawBoundingBox(frame)
                 out.write(frame)
 
+                if dir_size_limit is not None:
+                    dir_size = sum(os.path.getsize(os.path.join(root_path, f)) for f in os.listdir(root_path) if os.path.isfile(os.path.join(root_path, f)))
+                    if dir_size > dir_size_limit:
+                        dir_size_maxed = True
+                        break
+
             out.release()
             self.cap.release()
+            return dir_size_maxed
         except KeyboardInterrupt:
             out.release()
             self.cap.release()
+            return dir_size_maxed

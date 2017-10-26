@@ -1,9 +1,15 @@
+#/home/jren/env/bin/python
 from __future__ import unicode_literals
 
 import youtube_dl
 from urlparse import parse_qs
 
+from AbstractDetector import AbstractDetector
 from SSDDetector import SSDDetector
+
+youtube_ids = {
+    'alberta_cam': 'P75NIeJPV3I'
+}
 
 streams = {
     'rush_hour': '../uds_video_demo/rush_hour.mp4'
@@ -43,10 +49,20 @@ def getYoutubeStreamURL(stream_name, youtube_video_id):
         streams[stream_name] = m3u8.url
 
 def main():
-    getYoutubeStreamURL('alberta_cam', 'P75NIeJPV3I')
-    ssd_detector = SSDDetector('ssd', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam'])
-    ssd_detector.displayAnnotatedFrames()
-    # ssd_detector.saveAnnotatedFrames('output/rush_hour')
+    getYoutubeStreamURL('alberta_cam', youtube_ids['alberta_cam'])
+    # ssd_detector = SSDDetector('ssd', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam'])
+    # ssd_detector.displayAnnotatedFrames()
+    # ssd_detector.saveAnnotatedFrames('/nfs/diskstation/jren/test/alberta_cam', 60)
+    no_detector = AbstractDetector('original', streams['alberta_cam'])
+
+    dir_size_maxed = False
+    while not dir_size_maxed:
+        getYoutubeStreamURL('alberta_cam', youtube_ids['alberta_cam'])
+        no_detector.setStreamURL(streams['alberta_cam'])
+        dir_size_maxed = no_detector.saveAnnotatedFrames('alberta_cam', 
+                                                         root_path='/nfs/diskstation/jren/alberta_cam/',
+                                                         segment_length=60,
+                                                         dir_size_limit=1e12)
 
 if __name__ == "__main__":
     main()
