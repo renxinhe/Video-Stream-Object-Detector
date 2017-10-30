@@ -74,7 +74,7 @@ class AbstractDetector(object):
             self.cap.release()
             cv2.destroyAllWindows()
 
-    def saveAnnotatedFrames(self, filename, root_path='/nfs/diskstation/jren/alberta_cam/', segment_length=None, dir_size_limit=None):
+    def saveAnnotatedFrames(self, filename, root_path='./', segment_length=None, dir_size_limit=None):
         self.checkCapture()
 
         fps = int(self.cap.get(cv2.CAP_PROP_FPS))
