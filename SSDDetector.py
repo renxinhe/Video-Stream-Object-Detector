@@ -1,5 +1,5 @@
 import os, sys
-os.environ["CUDA_VISIBLE_DEVICES"]="0"
+os.environ["CUDA_VISIBLE_DEVICES"]="3"
 import math, random
 import cv2
 import numpy as np
@@ -14,9 +14,9 @@ from notebooks import visualization
 
 from AbstractDetector import AbstractDetector
 
-class SSDDetector(AbstractDetector):
+class SSD_VGG16Detector(AbstractDetector):
     def __init__(self, architechture, ckpt_filename, stream_url=None):
-        super(SSDDetector, self).__init__(architechture, stream_url=stream_url)
+        super(SSD_VGG16Detector, self).__init__(architechture, stream_url=stream_url)
 
         gpu_options = tf.GPUOptions(allow_growth=True)
         config = tf.ConfigProto(log_device_placement=False, gpu_options=gpu_options)

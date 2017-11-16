@@ -6,7 +6,8 @@ import youtube_dl
 from urlparse import parse_qs
 
 from AbstractDetector import AbstractDetector
-from SSDDetector import SSDDetector
+from SSDDetector import SSD_VGG16Detector
+from TensorflowDetector import TensorflowDetector
 
 youtube_ids = {
     'alberta_cam': 'P75NIeJPV3I'
@@ -66,12 +67,14 @@ def saveAlbertaCam():
                                                          dir_size_limit=1e12)
 
 def main():
-    # ssd_detector = SSDDetector('ssd', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam_night_demo'])
-    # ssd_detector.displayAnnotatedFrames()
+    # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam_night_demo'])
+    tf_detector = TensorflowDetector('ssd_mobilenet_v1', 'ssd_mobilenet_v1_coco_11_06_2017', streams['alberta_cam_day_demo'])
+    tf_detector = TensorflowDetector('ssd_inception_v2', 'ssd_inception_v2_coco_11_06_2017', streams['alberta_cam_day_demo'])
+    tf_detector.displayAnnotatedFrames()
 
-    img = cv2.imread('../uds_video_demo/alberta_nobox.png', cv2.IMREAD_COLOR)
-    ssd_detector = SSDDetector('ssd', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
-    print ssd_detector.process_image(img)
+    # img = cv2.imread('../uds_video_demo/alberta_nobox.png', cv2.IMREAD_COLOR)
+    # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
+    # print ssd_detector.process_image(img)
 
 if __name__ == "__main__":
     main()
