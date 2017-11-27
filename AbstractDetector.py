@@ -26,7 +26,7 @@ class AbstractDetector(object):
 
     def checkCapture(self):
         if not hasattr(self, 'cap') or self.cap is None or not self.cap.isOpened():
-            opened = self.openCaputure()
+            opened = self.openCapture()
             if not opened:
                 raise ValueError('Stream cannot be opened.')
 
@@ -37,7 +37,7 @@ class AbstractDetector(object):
         :return: True if opening capture was successful, false otherwise.
         :rtype: Boolean
     """
-    def openCaputure(self, stream_url=None):
+    def openCapture(self, stream_url=None):
         if stream_url is not None:
             self.stream_url = stream_url
         if self.stream_url is None:
@@ -57,7 +57,7 @@ class AbstractDetector(object):
         print 'Displaying with FPS = %d' % fps
         try:
             print 'Press Q to stop video stream.'
-            while(self.cap.isOpened()):
+            while self.cap.isOpened():
                 ret, frame = self.cap.read()
                 if frame is None:
                     break
@@ -92,7 +92,7 @@ class AbstractDetector(object):
         
         dir_size_maxed = False
         try:
-            while(self.cap.isOpened()):
+            while self.cap.isOpened():
                 if segment_length is not None:
                     if time() - mktime(timestamp) > segment_length:
                         timestamp = localtime()
