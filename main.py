@@ -69,18 +69,24 @@ def saveAlbertaCam():
                                                          dir_size_limit=1e12)
 
 def saveFramesWithCar():
-
-    def scanFramesForCar(video_name, output_dir, output_limit):
+    def scanFramesForCar(video_name, output_dir, output_limit=1000, num_skip_frames=1):
         ssd_detector.setStreamURL(os.path.join(VIDEO_ROOT_DIR, video_name))
         if not AbstractDetector.openCapture(ssd_detector):
             raise ValueError('Video file %s failed to open.' % video_name)
         print 'Scanning %s...' % (video_name)
 
         output_count = 0
+        frame_skip = 0
         while ssd_detector.cap.isOpened():
             ret, frame = ssd_detector.cap.read()
             if frame is None:
                 break
+
+            frame_skip += 1
+            assert num_skip_frames > 0 and int(num_skip_frames) == num_skip_frames
+            frame_skip %= num_skip_frames
+            if frame_skip != 0:
+                continue
 
             # Process frame here
             rclasses, rscores, rbboxes = ssd_detector.process_image(frame)
@@ -97,15 +103,16 @@ def saveFramesWithCar():
         print 'Writen %d images.' % (output_count)
         ssd_detector.cap.release()
 
-    def outputLimitReached(output_dir, output_limit=1000):
+    def outputLimitReached(output_dir, output_limit):
         count = len([name for name in os.listdir(output_dir) if os.path.isfile(os.path.join(output_dir, name))])
         return count >= output_limit
 
     ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
     VIDEO_ROOT_DIR = '/nfs/diskstation/jren/alberta_cam'
-    OUTPUT_DAY_DIR = '/nfs/diskstation/jren/alberta_cam_frames_with_car/day'
-    OUTPUT_NIGHT_DIR = '/nfs/diskstation/jren/alberta_cam_frames_with_car/night'
-    OUTPUT_LIMIT = 1000
+    OUTPUT_DAY_DIR = '/nfs/diskstation/jren/alberta_cam_frames_with_car_100_frame_skip/day'
+    OUTPUT_NIGHT_DIR = '/nfs/diskstation/jren/alberta_cam_frames_with_car_100_frame_skip/night'
+    OUTPUT_LIMIT = 5000
+    NUM_SKIP_FRAMES = 100
     day_limit_reached = False
     night_limit_reached = False
 
@@ -120,9 +127,9 @@ def saveFramesWithCar():
         video_timestamp = [int(x.strip()) for x in video_name_splitted[-1].split("-")]
         
         if not day_limit_reached and video_timestamp[0] > 9 and video_timestamp[0] < 17:
-            day_limit_reached = scanFramesForCar(video_name, OUTPUT_DAY_DIR, OUTPUT_LIMIT)
+            day_limit_reached = scanFramesForCar(video_name, OUTPUT_DAY_DIR, output_limit=OUTPUT_LIMIT, num_skip_frames=NUM_SKIP_FRAMES)
         elif not night_limit_reached and (video_timestamp[0] > 21 or video_timestamp[0] < 5):
-            night_limit_reached = scanFramesForCar(video_name, OUTPUT_NIGHT_DIR, OUTPUT_LIMIT)
+            night_limit_reached = scanFramesForCar(video_name, OUTPUT_NIGHT_DIR, output_limit=OUTPUT_LIMIT, num_skip_frames=NUM_SKIP_FRAMES)
 
 def main():
     # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam_night_demo'])
