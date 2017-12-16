@@ -55,7 +55,7 @@ def getYoutubeStreamURL(stream_name, youtube_video_id):
         streams[stream_name] = m3u8.url
 
 def saveAlbertaCam():
-    ssd_detector.saveAnnotatedFrames('alberta_cam_night_demo', root_path='../uds_video_demo/annotated')
+    ssd_detector.saveAnnotatedVideo('alberta_cam_night_demo', root_path='../uds_video_demo/annotated')
 
     no_detector = AbstractDetector('original', streams['alberta_cam'])
     getYoutubeStreamURL('alberta_cam', youtube_ids['alberta_cam'])
@@ -63,7 +63,7 @@ def saveAlbertaCam():
     while not dir_size_maxed:
         getYoutubeStreamURL('alberta_cam', youtube_ids['alberta_cam'])
         no_detector.setStreamURL(streams['alberta_cam'])
-        dir_size_maxed = no_detector.saveAnnotatedFrames('alberta_cam', 
+        dir_size_maxed = no_detector.saveAnnotatedVideo('alberta_cam', 
                                                          root_path='/nfs/diskstation/jren/alberta_cam/',
                                                          segment_length=60,
                                                          dir_size_limit=1e12)
@@ -131,13 +131,27 @@ def saveFramesWithCar():
         elif not night_limit_reached and (video_timestamp[0] > 21 or video_timestamp[0] < 5):
             night_limit_reached = scanFramesForCar(video_name, OUTPUT_NIGHT_DIR, output_limit=OUTPUT_LIMIT, num_skip_frames=NUM_SKIP_FRAMES)
 
+def saveAlbertaCamBBoxes():
+    VIDEO_ROOT_DIR = '/nfs/diskstation/jren/alberta_cam'
+    OUTPUT_DIR = '/nfs/diskstation/jren/alberta_cam_with_data'
+    COUNT_LIMIT = None
+    count = 0
+    ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
+    for video_name in os.listdir(VIDEO_ROOT_DIR):
+        print 'Processing %s...' % video_name
+        count += 1
+        if COUNT_LIMIT is not None and count > COUNT_LIMIT:
+            break
+        ssd_detector.setStreamURL(os.path.join(VIDEO_ROOT_DIR, video_name))
+        ssd_detector.saveAnnotatedImages(video_name.rstrip('.mp4'), OUTPUT_DIR)
+
 def main():
     # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam_night_demo'])
     # tf_detector = TensorflowDetector('ssd_mobilenet_v1', 'ssd_mobilenet_v1_coco_11_06_2017', streams['rush_hour'])
     tf_detector = TensorflowDetector('ssd_inception_v2', 'ssd_inception_v2_coco_11_06_2017', streams['rush_hour'])
     # tf_detector.displayAnnotatedFrames()
 
-    tf_detector.saveAnnotatedFrames('rush_hour', root_path='../uds_video_demo/annotated')
+    tf_detector.saveAnnotatedVideo('rush_hour', root_path='../uds_video_demo/annotated')
 
     # img = cv2.imread('../uds_video_demo/alberta_nobox.png', cv2.IMREAD_COLOR)
     # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
@@ -145,4 +159,4 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    saveFramesWithCar()
+    saveAlbertaCamBBoxes()

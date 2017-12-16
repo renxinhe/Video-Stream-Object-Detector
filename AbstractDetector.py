@@ -17,11 +17,23 @@ class AbstractDetector(object):
         self.stream_url = stream_url
 
     """
+        Gets the bounding boxes of objects in a frame.
+
+        :return: A tuple of (class, score, bounding box).
+            Class is an integer label.
+            Score is a floating point value.
+            Bounding box is a tuple of four integers representing the bounding box: (x1, y1, x2, y2),
+            where point 1 is the upper left corner. Point 2 is the bottom right corner.
+    """
+    def getBoundingBox(self, frame):
+        return None, None, (None, None, None, None)
+
+    """
         Draws object bounding boxes on FRAME.
 
         This function intends to modify the original FRAME destructively.
     """
-    def drawBoundingBox(self, frame):
+    def drawBoundingBox(self, frame, rclasses, rscores, rbboxes):
         return frame
 
     def checkCapture(self):
@@ -74,7 +86,7 @@ class AbstractDetector(object):
             self.cap.release()
             cv2.destroyAllWindows()
 
-    def saveAnnotatedFrames(self, filename, root_path='./', segment_length=None, dir_size_limit=None):
+    def saveAnnotatedVideo(self, filename, root_path='./', segment_length=None, dir_size_limit=None):
         self.checkCapture()
 
         fps = int(self.cap.get(cv2.CAP_PROP_FPS))
@@ -104,7 +116,8 @@ class AbstractDetector(object):
                     break
 
                 # Process frame here
-                self.drawBoundingBox(frame)
+                rclasses, rscores, rbboxes = self.getBoundingBox(frame)
+                frame = self.drawBoundingBox(frame, rclasses, rscores, rbboxes)
                 out.write(frame)
 
                 if dir_size_limit is not None:
@@ -118,5 +131,60 @@ class AbstractDetector(object):
             return dir_size_maxed
         except KeyboardInterrupt:
             out.release()
+            self.cap.release()
+            return dir_size_maxed
+
+
+    def saveAnnotatedImages(self, filename, root_path='./', select_threshold=0.5, dir_size_limit=None):
+        self.checkCapture()
+        
+        dir_size_maxed = False
+        frame_count = -1
+        try:
+            while self.cap.isOpened():
+
+                ret, frame = self.cap.read()
+                frame_count += 1
+                if frame is None:
+                    break
+
+                # Process frame here
+                rclasses, rscores, rbboxes = self.getBoundingBox(frame, select_threshold=select_threshold)
+                rbboxes = np.array(rbboxes)
+                if len(rclasses) <= 0:
+                    continue
+                img_dir = os.path.join(root_path, filename, 'imgs')
+                raw_img_path = os.path.join(img_dir, 'raw_%d' % frame_count) + '.jpg'
+                if not os.path.exists(img_dir):
+                    os.makedirs(img_dir)
+                cv2.imwrite(raw_img_path, frame)
+                
+                frame = self.drawBoundingBox(frame, rclasses, rscores, rbboxes)
+                annotated_img_path = os.path.join(img_dir, 'annotated_%d' % frame_count) + '.jpg'
+                cv2.imwrite(annotated_img_path, frame)
+
+                # Save bbox labels
+                bboxes_dir = os.path.join(root_path, filename)
+                if not os.path.exists(bboxes_dir + '/classes'):
+                    os.makedirs(bboxes_dir + '/classes')
+                np.save(os.path.join(bboxes_dir, 'classes', 'classes_%d' % frame_count), rclasses)
+
+                if not os.path.exists(bboxes_dir + '/scores'):
+                    os.makedirs(bboxes_dir + '/scores')
+                np.save(os.path.join(bboxes_dir, 'scores', 'scores_%d' % frame_count), rscores)
+
+                if not os.path.exists(bboxes_dir + '/bboxes'):
+                    os.makedirs(bboxes_dir + '/bboxes')
+                np.save(os.path.join(bboxes_dir, 'bboxes', 'bboxes_%d' % frame_count), rbboxes)
+
+                if dir_size_limit is not None:
+                    dir_size = sum(os.path.getsize(os.path.join(root_path, f)) for f in os.listdir(root_path) if os.path.isfile(os.path.join(root_path, f)))
+                    if dir_size > dir_size_limit:
+                        dir_size_maxed = True
+                        break
+
+            self.cap.release()
+            return dir_size_maxed
+        except KeyboardInterrupt:
             self.cap.release()
             return dir_size_maxed

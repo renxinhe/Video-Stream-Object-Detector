@@ -49,7 +49,7 @@ class SSD_VGG16Detector(AbstractDetector):
     """
         Main image processing routine.
     """
-    def process_image(self, img, select_threshold=0.5, nms_threshold=.45, net_shape=(300, 300)):
+    def getBoundingBox(self, img, select_threshold=0.5, nms_threshold=.45, net_shape=(300, 300)):
         # Run SSD network.
         rimg, rpredictions, rlocalisations, rbbox_img = self.isess.run([self.image_4d, self.predictions, self.localisations, self.bbox_img],
                                                                   feed_dict={self.img_input: img})
@@ -64,9 +64,8 @@ class SSD_VGG16Detector(AbstractDetector):
         rclasses, rscores, rbboxes = np_methods.bboxes_nms(rclasses, rscores, rbboxes, nms_threshold=nms_threshold)
         # Resize bboxes to original image shape. Note: useless for Resize.WARP!
         rbboxes = np_methods.bboxes_resize(rbbox_img, rbboxes)
-        return rclasses, rscores, rbboxes
+        return rclasses, rscores, tuple(rbboxes)
 
-    def drawBoundingBox(self, frame):
-        rclasses, rscores, rbboxes =  self.process_image(frame)
+    def drawBoundingBox(self, frame, rclasses, rscores, rbboxes):
         visualization.bboxes_draw_on_img(frame, rclasses, rscores, rbboxes, visualization.colors_plasma)
         return frame
