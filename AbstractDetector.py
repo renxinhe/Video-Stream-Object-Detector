@@ -75,7 +75,8 @@ class AbstractDetector(object):
                     break
 
                 # Process frame here
-                self.drawBoundingBox(frame)
+                rclasses, rscores, rbboxes = self.getBoundingBox(frame)
+                self.drawBoundingBox(frame, rclasses, rscores, np.array(rbboxes))
                 
                 cv2.imshow('%s Video Stream' % self.architechture, frame)
                 if cv2.waitKey(1000 / fps) & 0xFF == ord('q'):

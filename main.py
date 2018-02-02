@@ -145,13 +145,22 @@ def saveAlbertaCamBBoxes():
         ssd_detector.setStreamURL(os.path.join(VIDEO_ROOT_DIR, video_name))
         ssd_detector.saveAnnotatedImages(video_name.rstrip('.mp4'), OUTPUT_DIR)
 
-def main():
-    # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt', streams['alberta_cam_night_demo'])
-    # tf_detector = TensorflowDetector('ssd_mobilenet_v1', 'ssd_mobilenet_v1_coco_11_06_2017', streams['rush_hour'])
-    tf_detector = TensorflowDetector('ssd_inception_v2', 'ssd_inception_v2_coco_11_06_2017', streams['rush_hour'])
-    # tf_detector.displayAnnotatedFrames()
+def annotateImage(image_path):
+    ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
+    img = cv2.imread(image_path)
+    rclasses, rscores, rbboxes = ssd_detector.getBoundingBox(img)
+    img = ssd_detector.drawBoundingBox(img, rclasses, rscores, rbboxes)
+    cv2.imshow('image',img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-    tf_detector.saveAnnotatedVideo('rush_hour', root_path='../uds_video_demo/annotated')
+def main():
+    ssd_detector = SSD_VGG16Detector('ssd_vgg16', '../../../SSD-Tensorflow-master/logs/model.ckpt-8715', streams['alberta_cam_day_demo'])
+    # # tf_detector = TensorflowDetector('ssd_mobilenet_v1', 'ssd_mobilenet_v1_coco_11_06_2017', streams['rush_hour'])
+    # tf_detector = TensorflowDetector('ssd_inception_v2', 'ssd_inception_v2_coco_11_06_2017', streams['rush_hour'])
+    # ssd_detector.displayAnnotatedFrames()
+
+    ssd_detector.saveAnnotatedVideo('alberta_cam_day_demo_retrained', root_path='../uds_video_demo/annotated')
 
     # img = cv2.imread('../uds_video_demo/alberta_nobox.png', cv2.IMREAD_COLOR)
     # ssd_detector = SSD_VGG16Detector('ssd_vgg16', 'VGG_VOC0712_SSD_300x300_ft_iter_120000.ckpt')
@@ -159,4 +168,4 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    saveAlbertaCamBBoxes()
+    annotateImage('../uds_video_demo/alberta_nobox.png')

@@ -60,24 +60,24 @@ def draw_rectangle(img, p1, p2, color=[255, 0, 0], thickness=2):
 def draw_bbox(img, bbox, shape, label, color=[255, 0, 0], thickness=2):
     p1 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))
     p2 = (int(bbox[2] * shape[0]), int(bbox[3] * shape[1]))
-    cv2.rectangle(img, p1[::-1], p2[::-1], color, thickness)
-    p1 = (p1[0]+15, p1[1])
-    cv2.putText(img, str(label), p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.5, color, 1)
+    cv2.rectangle(img, p1, p2, color, thickness)
+    p1 = (p1[0], p1[1]+15)
+    cv2.putText(img, str(label), p1, cv2.FONT_HERSHEY_DUPLEX, 0.5, color, 1)
 
 
 def bboxes_draw_on_img(img, classes, scores, bboxes, colors, thickness=2):
-    shape = img.shape
+    height, width, channel = img.shape
     for i in range(bboxes.shape[0]):
         bbox = bboxes[i]
         color = colors[classes[i]]
         # Draw bounding box...
-        p1 = (int(bbox[0] * shape[0]), int(bbox[1] * shape[1]))
-        p2 = (int(bbox[2] * shape[0]), int(bbox[3] * shape[1]))
-        cv2.rectangle(img, p1[::-1], p2[::-1], color, thickness)
+        p1 = (int(bbox[0] * width), int(bbox[1] * height))
+        p2 = (int(bbox[2] * width), int(bbox[3] * height))
+        cv2.rectangle(img, p1, p2, color, thickness)
         # Draw text...
         s = '%s/%.3f' % (classes[i], scores[i])
-        p1 = (p1[0]-5, p1[1])
-        cv2.putText(img, s, p1[::-1], cv2.FONT_HERSHEY_DUPLEX, 0.4, color, 1)
+        p1 = (p1[0], p1[1]-5)
+        cv2.putText(img, s, p1, cv2.FONT_HERSHEY_DUPLEX, 0.4, color, 1)
 
 
 # =========================================================================== #
@@ -97,10 +97,10 @@ def plt_bboxes(img, classes, scores, bboxes, figsize=(10,10), linewidth=1.5):
             score = scores[i]
             if cls_id not in colors:
                 colors[cls_id] = (random.random(), random.random(), random.random())
-            ymin = int(bboxes[i, 0] * height)
-            xmin = int(bboxes[i, 1] * width)
-            ymax = int(bboxes[i, 2] * height)
-            xmax = int(bboxes[i, 3] * width)
+            xmin = int(bboxes[i, 0] * height)
+            ymin = int(bboxes[i, 1] * width)
+            xmax = int(bboxes[i, 2] * height)
+            ymax = int(bboxes[i, 3] * width)
             rect = plt.Rectangle((xmin, ymin), xmax - xmin,
                                  ymax - ymin, fill=False,
                                  edgecolor=colors[cls_id],

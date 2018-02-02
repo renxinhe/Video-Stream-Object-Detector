@@ -7,7 +7,7 @@ import tensorflow as tf
 
 slim = tf.contrib.slim
 
-sys.path.append('SSD/')
+sys.path.insert(0, 'SSD/')
 from nets import ssd_vgg_300, ssd_common, np_methods
 from preprocessing import ssd_vgg_preprocessing
 from notebooks import visualization
@@ -64,8 +64,11 @@ class SSD_VGG16Detector(AbstractDetector):
         rclasses, rscores, rbboxes = np_methods.bboxes_nms(rclasses, rscores, rbboxes, nms_threshold=nms_threshold)
         # Resize bboxes to original image shape. Note: useless for Resize.WARP!
         rbboxes = np_methods.bboxes_resize(rbbox_img, rbboxes)
-        return rclasses, rscores, tuple(rbboxes)
+        # Original SSD output is (ymin, xmin, ymax, xmax)
+        for i, rbbox in enumerate(rbboxes):
+            rbboxes[i] = (rbbox[1], rbbox[0], rbbox[3], rbbox[2])
+        return rclasses, rscores, rbboxes
 
-    def drawBoundingBox(self, frame, rclasses, rscores, rbboxes):
-        visualization.bboxes_draw_on_img(frame, rclasses, rscores, rbboxes, visualization.colors_plasma)
-        return frame
+    def drawBoundingBox(self, img, rclasses, rscores, rbboxes):
+        visualization.bboxes_draw_on_img(img, rclasses, rscores, np.array(rbboxes), visualization.colors_plasma)
+        return img
