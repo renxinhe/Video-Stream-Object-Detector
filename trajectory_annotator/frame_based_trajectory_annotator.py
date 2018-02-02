@@ -50,7 +50,7 @@ AX is a matplotlib axis object.
 BBOX is an array like object: [xmin, ymin, xmax, ymax].
 IM_SIZE is image (width, height).
 """
-def draw_bbox(ax, bbox, label, im_size, color=None, picker=True):
+def draw_bbox(ax, bbox, label, bbox_traj, im_size, color=None, picker=True):
     width = (bbox[2] - bbox[0]) * im_size[0]
     height = (bbox[3] - bbox[1]) * im_size[1]
     
@@ -60,10 +60,14 @@ def draw_bbox(ax, bbox, label, im_size, color=None, picker=True):
     else:
         linestyle = 'solid'
     # patches.Rectangle(top_left_xy, width, height)
-    rect = patches.Rectangle((bbox[0] * im_size[0], bbox[1] * im_size[1]), width, height,
+    xmin = bbox[0] * im_size[0]
+    ymin = bbox[1] * im_size[1]
+    rect = patches.Rectangle((xmin, ymin), width, height,
                              linewidth=1.5, linestyle=linestyle, label=label,
                              edgecolor=color, facecolor='none', picker=picker)
     ax.add_patch(rect)
+    if bbox_traj is not None and color is not None:
+        ax.text(xmin, ymin - 5, '#%s' % str(bbox_traj), color=color, backgroundcolor=(1, 1, 1, 0.5), fontweight='bold')
     
 def YX_to_XY(bbox):
     return (bbox[1], bbox[0], bbox[3], bbox[2])
@@ -185,10 +189,12 @@ def main(data_dir):
             bbox = YX_to_XY(bbox)
             midpoint = get_midpoint(*bbox)
             color = None
+            bbox_traj = None
             for tmp_x, tmp_y, tmp_class, tmp_traj in trajectories[frame_i]:
                 if np.allclose(midpoint, (tmp_x, tmp_y)):
                     color = 'C%d' % (int(tmp_traj) % 10)
-            draw_bbox(ax, bbox, classes[i], img_size, color=color, picker=(color is None))
+                    bbox_traj = tmp_traj
+            draw_bbox(ax, bbox, classes[i], bbox_traj, img_size, color=color, picker=(color is None))
         
         fig.waitforbuttonpress(timeout=-1)
         ax.clear()
